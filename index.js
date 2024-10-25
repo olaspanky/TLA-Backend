@@ -79,11 +79,6 @@ app.use(cookieParser());
 app.use(morgan("dev"));
 app.use("/api", routes);
 
-app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Credentials', true);
-  next();
-});
-
 // Error handling middleware
 app.use(routeNotFound);
 app.use(errorHandler);
