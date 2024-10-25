@@ -20,7 +20,7 @@ export const createJWT = (res, userId) => {
   res.cookie("token", token, {
     httpOnly: true,
     secure: isProduction, // Secure in production
-    SameSite: "None", //prevent CSRF attack
+    SameSite: "none", //prevent CSRF attack
     maxAge: 24 * 60 * 60 * 1000, // 1 day
   });
 };
