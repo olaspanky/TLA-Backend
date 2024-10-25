@@ -17,7 +17,7 @@ const app = express();
 
 app.use(
   cors({
-    origin: ["http://localhost:3000", "https://pbr-tla.netlify.app"],
+    origin: ["http://localhost:3000", "https://pbr-tla.netlify.app", "https://tla-two.vercel.app"],
     methods: ["GET", "POST", "DELETE", "PUT"],
     credentials: true,
   })
