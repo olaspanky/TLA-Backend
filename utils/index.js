@@ -15,13 +15,12 @@ export const createJWT = (res, userId) => {
   const token = jwt.sign({ userId }, process.env.JWT_SECRET, {
     expiresIn: "1d",
   });
-  const isProduction = process.env.NODE_ENV === "production";
 
   // Change sameSite from strict to none when you deploy your app
   res.cookie("token", token, {
     httpOnly: true,
     secure: isProduction, // Secure in production
-    sameSite: isProduction ? "None" : "Lax", // None for production, Lax for dev
+    sameSite: "None", //prevent CSRF attack
     maxAge: 24 * 60 * 60 * 1000, // 1 day
   });
 };
