@@ -69,7 +69,7 @@ app.options('*', cors()); // Allow preflight requests for all routes
 
 // Root route
 app.get('/', (req, res) => {
-  res.status(200).json({ message: 'Welcome to the API!' });
+  res.status(200).json({ message: 'Welcome to the Pbr API!' });
 });
 
 // Middleware setup
