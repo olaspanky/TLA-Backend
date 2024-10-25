@@ -58,13 +58,13 @@ const app = express();
 // Enable CORS with corrected settings
 app.use(
   cors({
-    origin: ["http://localhost:3000", "http://localhost:3001", "https://tla-two.vercel.app"],
+    origin: ["http://localhost:3000", "https://tla-two.vercel.app"],
     methods: ["GET", "POST", "DELETE", "PUT", "OPTIONS"],
     credentials: true,
   })
 );
 
-// Handle preflight requests
+// Handle
 app.options('*', cors()); // Allow preflight requests for all routes
 
 // Root route
