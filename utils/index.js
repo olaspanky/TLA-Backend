@@ -24,6 +24,9 @@
 //     maxAge: 1 * 24 * 60 * 60 * 1000, //1 day
 //   });
 // };
+
+
+// this is something to make it reload
 import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
 
