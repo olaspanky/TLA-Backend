@@ -3,12 +3,49 @@ import User from "../models/user.js";
 import { createJWT } from "../utils/index.js";
 import Notice from "../models/notification.js";
 
+// export const registerUser = async (req, res) => {
+//   try {
+//     const { name, email, password, isAdmin, role, title } = req.body;
+
+//     const userExist = await User.findOne({ email });
+
+//     if (userExist) {
+//       return res.status(400).json({
+//         status: false,
+//         message: "User already exists",
+//       });
+//     }
+
+//     const user = await User.create({
+//       name,
+//       email,
+//       password,
+//       isAdmin,
+//       role,
+//       title,
+//     });
+
+//     if (user) {
+//       isAdmin ? createJWT(res, user._id) : null;
+
+//       user.password = undefined;
+
+//       res.status(201).json(user);
+//     } else {
+//       return res
+//         .status(400)
+//         .json({ status: false, message: "Invalid user data" });
+//     }
+//   } catch (error) {
+//     console.log(error);
+//     return res.status(400).json({ status: false, message: error.message });
+//   }
+// };
 export const registerUser = async (req, res) => {
   try {
-    const { name, email, password, isAdmin, role, title } = req.body;
+    const { name, email, password, isAdmin, role, title, securityQuestion, securityAnswer } = req.body;
 
     const userExist = await User.findOne({ email });
-
     if (userExist) {
       return res.status(400).json({
         status: false,
@@ -23,24 +60,25 @@ export const registerUser = async (req, res) => {
       isAdmin,
       role,
       title,
+      securityQuestion,
+      securityAnswer,
     });
 
     if (user) {
-      isAdmin ? createJWT(res, user._id) : null;
-
+      if (isAdmin) createJWT(res, user._id);
       user.password = undefined;
-
+      user.securityAnswer = undefined;
       res.status(201).json(user);
     } else {
-      return res
-        .status(400)
-        .json({ status: false, message: "Invalid user data" });
+      res.status(400).json({ status: false, message: "Invalid user data" });
     }
   } catch (error) {
     console.log(error);
-    return res.status(400).json({ status: false, message: error.message });
+    res.status(400).json({ status: false, message: error.message });
   }
 };
+
+
 
 export const loginUser = async (req, res) => {
   try {
@@ -249,5 +287,33 @@ export const deleteUserProfile = async (req, res) => {
   } catch (error) {
     console.log(error);
     return res.status(400).json({ status: false, message: error.message });
+  }
+};
+
+
+export const forgotPassword = async (req, res) => {
+  try {
+    const { email, securityAnswer, newPassword } = req.body;
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ status: false, message: "User not found" });
+    }
+
+    // Validate security answer
+    const isAnswerMatch = await user.matchSecurityAnswer(securityAnswer);
+    if (!isAnswerMatch) {
+      return res.status(401).json({ status: false, message: "Incorrect security answer" });
+    }
+
+    // Update password
+    user.password = newPassword;
+    await user.save();
+    user.password = undefined;
+
+    res.status(200).json({ status: true, message: "Password updated successfully" });
+  } catch (error) {
+    console.log(error);
+    res.status(400).json({ status: false, message: error.message });
   }
 };

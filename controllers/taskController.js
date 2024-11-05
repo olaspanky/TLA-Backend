@@ -197,35 +197,6 @@ export const dashboardStatistics = async (req, res) => {
   }
 };
 
-// export const getTasks = async (req, res) => {
-//   try {
-//     const { stage, isTrashed } = req.query;
-
-//     let query = { isTrashed: isTrashed ? true : false };
-
-//     if (stage) {
-//       query.stage = stage;
-//     }
-
-//     let queryResult = Task.find(query)
-//       .populate({
-//         path: "team",
-//         select: "name title email",
-//       })
-//       .sort({ _id: -1 });
-
-//     const tasks = await queryResult;
-
-//     res.status(200).json({
-//       status: true,
-//       tasks,
-//     });
-//   } catch (error) {
-//     console.log(error);
-//     return res.status(400).json({ status: false, message: error.message });
-//   }
-// };
-
 
 
 export const getTasks = async (req, res) => {
@@ -321,8 +292,90 @@ export const createSubTask = async (req, res) => {
 };
 
 
+// export const updateSubtask = async (req, res) => {
+//   try {
+//     const { title, tag, date, stage, objectives } = req.body; // Fields to update
+//     const { id, subTaskId } = req.params;
 
-export const updateSubTask = async (req, res) => {
+//     // Validate parameters
+//     if (!id || !subTaskId) {
+//       return res.status(400).json({ status: false, message: "Invalid parameters." });
+//     }
+
+//     // Find the task
+//     const task = await Task.findById(id);
+//     if (!task) {
+//       return res.status(404).json({ status: false, message: "Task not found." });
+//     }
+
+//     // Find the subtask
+//     const subTask = task.subTasks.id(subTaskId);
+//     if (!subTask) {
+//       return res.status(404).json({ status: false, message: "Subtask not found." });
+//     }
+
+//     // Update fields if provided in the request body
+//     if (title !== undefined) subTask.title = title; // Corrected variable name
+//     if (tag !== undefined) subTask.tag = tag;
+//     if (date !== undefined) subTask.date = date;
+//     if (stage !== undefined) subTask.stage = stage.toLowerCase();
+//     if (objectives !== undefined) subTask.objectives = objectives; // Validate if needed
+
+//     // Save changes to the task
+//     await task.save();
+
+//     // Send successful response
+//     res.status(200).json({ status: true, message: "Subtask updated successfully." });
+//   } catch (error) {
+//     console.error(error); // Log the error for debugging
+//     return res.status(500).json({ status: false, message: "An error occurred while updating the subtask." });
+//   }
+// };
+
+export const updateSubtask = async (req, res) => {
+  console.log("Request body:", req.body); // Log the body
+  console.log("Request parameters:", req.params); // Log parameters
+
+  try {
+    const { title, tag, date, stage, objectives } = req.body;
+    const { id, subTaskId } = req.params;
+
+    // Additional validation if needed
+    console.log("ID:", id, "Subtask ID:", subTaskId); // Log IDs
+
+    if (!id || !subTaskId) {
+      return res.status(400).json({ status: false, message: "Invalid parameters." });
+    }
+
+    const task = await Task.findById(id);
+    if (!task) {
+      return res.status(404).json({ status: false, message: "Task not found." });
+    }
+
+    const subTask = task.subTasks.id(subTaskId);
+    if (!subTask) {
+      return res.status(404).json({ status: false, message: "SubTask not found." });
+    }
+
+    // Update fields if provided in the request body
+    if (title !== undefined) subTask.title = title;
+    if (tag !== undefined) subTask.tag = tag;
+    if (date !== undefined) subTask.date = date;
+    if (stage !== undefined) subTask.stage = stage.toLowerCase();
+    if (objectives !== undefined) subTask.objectives = objectives; // Change from subtask to subTask
+
+    await task.save();
+
+    res.status(200).json({ status: true, message: "Subtask updated successfully." });
+  } catch (error) {
+    console.log("Error in updateSubtask:", error); // Log error details
+    return res.status(400).json({ status: false, message: error.message });
+  }
+};
+
+
+
+export const updateSubTaskItem = async (req, res) => {
   try {
     const { id, subTaskId, objectiveId } = req.params;
     const { description, status } = req.body;

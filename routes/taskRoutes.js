@@ -50,7 +50,8 @@ import {
   postTaskActivity,
   trashTask,
   updateTask,
-  updateSubTask
+  updateSubtask,
+  updateSubTaskItem
 } from "../controllers/taskController.js";
 import { isAdminRoute, protectRoute } from "../middlewares/authMiddlewave.js";
 
@@ -65,8 +66,9 @@ router.get("/", protectRoute, getTasks);
 router.get("/:id", protectRoute, getTask);
 
 router.put("/create-subtask/:id", protectRoute, createSubTask);
-router.put("/update-subtask/:id/:subTaskId", protectRoute, updateSubTask); // Corrected route with both taskId and subTaskId
-router.put("/update-subtask/:id/:subTaskId/:objectiveId", protectRoute, updateSubTask); 
+router.put("/update-subtaskItem/:id/:subTaskId/:objectiveId", protectRoute, updateSubTaskItem); 
+router.put("/update-subtask/:id/:subTaskId", protectRoute, updateSubtask); 
+
 router.put("/update/:id", protectRoute, updateTask);
 router.put("/:id", protectRoute, trashTask);
 

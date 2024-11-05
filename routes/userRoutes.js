@@ -46,6 +46,7 @@ import {
   markNotificationRead,
   registerUser,
   updateUserProfile,
+  forgotPassword
 } from "../controllers/userController.js";
 
 const router = express.Router();
@@ -60,6 +61,8 @@ router.get("/notifications", protectRoute, getNotificationsList);
 router.put("/profile", protectRoute, updateUserProfile);
 router.put("/read-noti", protectRoute, markNotificationRead);
 router.put("/change-password", protectRoute, changeUserPassword);
+router.post("/forgot-password", forgotPassword); // Forgot password route
+
 
 // //   FOR ADMIN ONLY - ADMIN ROUTES
 router
