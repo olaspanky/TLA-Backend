@@ -373,6 +373,37 @@ export const updateSubtask = async (req, res) => {
   }
 };
 
+export const deleteSubTask = async (req, res) => {
+  try {
+    const { id, subTaskId } = req.params; // Get task and subtask IDs from request parameters
+
+    const task = await Task.findById(id);
+
+    if (!task) {
+      return res.status(404).json({ status: false, message: "Task not found." });
+    }
+
+    // Find the index of the subtask with the given subtaskId
+    const subTaskIndex = task.subTasks.findIndex(subtask => subtask._id.toString() === subTaskId);
+
+    if (subTaskIndex === -1) {
+      return res.status(404).json({ status: false, message: "SubTask not found." });
+    }
+
+    // Remove the subtask from the array
+    task.subTasks.splice(subTaskIndex, 1);
+
+    // Save the updated task
+    await task.save();
+
+    res.status(200).json({ status: true, message: "SubTask deleted successfully." });
+  } catch (error) {
+    console.log(error);
+    return res.status(400).json({ status: false, message: error.message });
+  }
+};
+
+
 
 
 export const updateSubTaskItem = async (req, res) => {

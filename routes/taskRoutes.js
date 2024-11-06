@@ -51,7 +51,7 @@ import {
   trashTask,
   updateTask,
   updateSubtask,
-  updateSubTaskItem
+  updateSubTaskItem, deleteSubTask
 } from "../controllers/taskController.js";
 import { isAdminRoute, protectRoute } from "../middlewares/authMiddlewave.js";
 
@@ -71,6 +71,8 @@ router.put("/update-subtask/:id/:subTaskId", protectRoute, updateSubtask);
 
 router.put("/update/:id", protectRoute, updateTask);
 router.put("/:id", protectRoute, trashTask);
+router.delete("/delete-subtask/:id/:subTaskId", protectRoute, deleteSubTask); // New route for deleting a subtask
+
 
 router.delete(
   "/delete-restore/:id?",
