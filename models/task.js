@@ -1,76 +1,18 @@
-// // import mongoose, { Schema } from "mongoose";
-
-// // const taskSchema = new Schema(
-// //   {
-// //     title: { type: String, required: true },
-// //     date: { type: Date, default: new Date() },
-// //     priority: {
-// //       type: String,
-// //       default: "normal",
-// //       enum: ["high", "medium", "normal", "low"],
-// //     },
-// //     stage: {
-// //       type: String,
-// //       default: "todo",
-// //       enum: ["todo", "in progress", "completed"],
-// //     },
-// //     activities: [
-// //       {
-// //         type: {
-// //           type: String,
-// //           default: "assigned",
-// //           enum: [
-// //             "assigned",
-// //             "started",
-// //             "in progress",
-// //             "bug",
-// //             "completed",
-// //             "commented",
-// //           ],
-// //         },
-// //         activity: String,
-// //         date: { type: Date, default: new Date() },
-// //         by: { type: Schema.Types.ObjectId, ref: "User" },
-// //       },
-// //     ],
-
-// //     subTasks: [
-// //       {
-// //         title: String,
-// //         date: Date,
-// //         tag: String,
-// //         stage: {
-// //           type: String,
-// //           default: "todo",
-// //           enum: ["todo", "in progress", "completed"],
-// //         },
-// //       },
-// //     ],
-// //     assets: [String],
-// //     team: [{ type: Schema.Types.ObjectId, ref: "User" }],
-// //     isTrashed: { type: Boolean, default: false },
-// //   },
-// //   { timestamps: true }
-// // );
-
-// // const Task = mongoose.model("Task", taskSchema);
-
-// // export default Task;
 // import mongoose, { Schema } from "mongoose";
 
 // const taskSchema = new Schema(
 //   {
 //     title: { type: String, required: true },
-//     date: { type: Date, default: new Date() },  // Sets the date to current date by default
+//     date: { type: Date, default: () => new Date() },
 //     priority: {
 //       type: String,
 //       default: "normal",
-//       enum: ["high", "medium", "normal", "low"], // Enum restricts values
+//       enum: ["high", "medium", "normal", "low"],
 //     },
 //     stage: {
 //       type: String,
 //       default: "todo",
-//       enum: ["todo", "in progress", "completed"], // Enum restricts values
+//       enum: ["todo", "in progress", "completed"],
 //     },
 //     activities: [
 //       {
@@ -84,30 +26,52 @@
 //             "bug",
 //             "completed",
 //             "commented",
-//           ], // Enum for activity type
+//           ],
 //         },
-//         activity: String,  // Describes the activity itself
-//         date: { type: Date, default: new Date() },  // Activity date defaults to current date
-//         by: { type: Schema.Types.ObjectId, ref: "User" }, // Reference to the User who performed the activity
+//         activity: String,
+//         date: { type: Date, default: () => new Date() },
+//         by: { type: Schema.Types.ObjectId, ref: "User" },
 //       },
 //     ],
 //     subTasks: [
 //       {
-//         title: String,  // Title of the subtask
-//         date: { type: Date, default: new Date() },  // Subtask date defaults to current date
-//         tag: String,  // Any tag for the subtask
+//         title: { type: String, required: true }, // Subtask title
+//         date: { type: Date, default: () => new Date() }, // Subtask creation date
+//         tag: { type: String, required: true }, // Subtask tag
 //         stage: {
 //           type: String,
 //           default: "todo",
-//           enum: ["todo", "in progress", "completed"], // Enum restricts values
+//           enum: ["todo", "in progress", "completed"], // Subtask stage
 //         },
+//         objectives: [
+//           {
+//             description: { type: String, required: false }, // Objective description
+//             status: {
+//               type: String,
+//               default: "todo",
+//               enum: ["todo", "in progress", "completed"], // Objective status
+//             },
+//           },
+//         ],
+//         comments: [
+//           {
+//             text: String,
+//             rating: Number, // e.g., 1-5 scale
+//             reaction: String, // e.g., "like", "disagree"
+//             author: String, // Reference to a user
+//             timestamp: { type: Date, default: Date.now },
+//           },
+//         ],
+//         startDate: { type: Date, required: false }, // Subtask start date
+//         completionDate: { type: Date, required: false }, // Subtask completion date
+//         team: [{ type: Schema.Types.ObjectId, ref: "User" }], // Team assigned to subtask
 //       },
 //     ],
-//     assets: [String],  // List of asset URLs or names (array of strings)
-//     team: [{ type: Schema.Types.ObjectId, ref: "User" }], // List of team members (User references)
-//     isTrashed: { type: Boolean, default: false },  // Trash flag for soft deletion
+//     assets: [String],
+//     team: [{ type: Schema.Types.ObjectId, ref: "User" }], // Main task team
+//     isTrashed: { type: Boolean, default: false },
 //   },
-//   { timestamps: true }  // Automatically adds `createdAt` and `updatedAt` fields
+//   { timestamps: true }
 // );
 
 // const Task = mongoose.model("Task", taskSchema);
@@ -118,7 +82,7 @@ import mongoose, { Schema } from "mongoose";
 const taskSchema = new Schema(
   {
     title: { type: String, required: true },
-    date: { type: Date, default: new Date() },
+    date: { type: Date, default: () => new Date() },
     priority: {
       type: String,
       default: "normal",
@@ -144,35 +108,46 @@ const taskSchema = new Schema(
           ],
         },
         activity: String,
-        date: { type: Date, default: new Date() },
+        date: { type: Date, default: () => new Date() },
         by: { type: Schema.Types.ObjectId, ref: "User" },
       },
     ],
     subTasks: [
       {
-        title: { type: String, required: true },  // Ensure title is required
-        date: { type: Date, default: () => new Date() },  // Wrap in function for a fresh date per subtask
-        tag: { type: String, required: true },  // Ensure tag is required or remove if optional
+        title: { type: String, required: true }, // Subtask title
+        date: { type: Date, default: () => new Date() }, // Subtask creation date
+        tag: { type: String, required: true }, // Subtask tag
         stage: {
           type: String,
           default: "todo",
-          enum: ["todo", "in progress", "completed"],  // Valid stages
+          enum: ["todo", "in progress", "completed"], // Subtask stage
         },
-        objectives: [  // Array of objectives for each subtask
+        objectives: [
           {
-            description: { type: String, required: false },  // Ensure each objective has a description
+            description: { type: String, required: false }, // Objective description
             status: {
               type: String,
               default: "todo",
-              enum: ["todo", "in progress", "completed"],  // Valid statuses for each objective
+              enum: ["todo", "in progress", "completed"], // Objective status
             },
           },
         ],
+        comments: [
+          {
+            text: String,
+            rating: Number, // e.g., 1-5 scale
+            reaction: String, // e.g., "like", "disagree"
+            author: String, // Reference to a user
+            timestamp: { type: Date, default: Date.now },
+          },
+        ],
+        startDate: { type: Date, required: false }, // Subtask start date
+        completionDate: { type: Date, required: false }, // Subtask completion date
+        team: [{ type: Schema.Types.ObjectId, ref: "User" }], // Team assigned to subtask
       },
     ],
-    
     assets: [String],
-    team: [{ type: Schema.Types.ObjectId, ref: "User" }],
+    team: [{ type: Schema.Types.ObjectId, ref: "User" }], // Main task team
     isTrashed: { type: Boolean, default: false },
   },
   { timestamps: true }

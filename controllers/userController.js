@@ -291,29 +291,75 @@ export const deleteUserProfile = async (req, res) => {
 };
 
 
+// export const forgotPassword = async (req, res) => {
+//   try {
+//     const { email, securityAnswer, newPassword } = req.body;
+
+//     const user = await User.findOne({ email });
+//     if (!user) {
+//       return res.status(404).json({ status: false, message: "User not found" });
+//     }
+
+//     // Validate security answer
+//     const isAnswerMatch = await user.matchSecurityAnswer(securityAnswer);
+//     if (!isAnswerMatch) {
+//       return res.status(401).json({ status: false, message: "Incorrect security answer" });
+//     }
+
+//     // Update password
+//     user.password = newPassword;
+//     await user.save();
+//     user.password = undefined;
+
+//     res.status(200).json({ status: true, message: "Password updated successfully" });
+//   } catch (error) {
+//     console.log(error);
+//     res.status(400).json({ status: false, message: error.message });
+//   }
+// };
 export const forgotPassword = async (req, res) => {
   try {
     const { email, securityAnswer, newPassword } = req.body;
 
+    if (!email) {
+      return res.status(400).json({ status: false, message: "Email is required." });
+    }
+
     const user = await User.findOne({ email });
     if (!user) {
-      return res.status(404).json({ status: false, message: "User not found" });
+      return res.status(404).json({ status: false, message: "User not found." });
     }
 
-    // Validate security answer
-    const isAnswerMatch = await user.matchSecurityAnswer(securityAnswer);
-    if (!isAnswerMatch) {
-      return res.status(401).json({ status: false, message: "Incorrect security answer" });
+    // Step 1: Return security question if no answer or new password is provided
+    if (!securityAnswer && !newPassword) {
+      if (!user.securityQuestion) {
+        return res.status(400).json({ status: false, message: "No security question set for this user." });
+      }
+      return res.status(200).json({
+        status: true,
+        securityQuestion: user.securityQuestion, // Assuming `securityQuestion` is a field in your schema
+      });
     }
 
-    // Update password
-    user.password = newPassword;
-    await user.save();
-    user.password = undefined;
+    // Step 2: Validate Security Answer
+    if (securityAnswer && !newPassword) {
+      const isAnswerMatch = await user.matchSecurityAnswer(securityAnswer);
+      if (!isAnswerMatch) {
+        return res.status(401).json({ status: false, message: "Incorrect security answer." });
+      }
+      return res.status(200).json({ status: true, validAnswer: true });
+    }
 
-    res.status(200).json({ status: true, message: "Password updated successfully" });
+    // Step 3: Update Password
+    if (newPassword) {
+      user.password = newPassword; // Password will be hashed via pre-save hook
+      await user.save();
+      return res.status(200).json({ status: true, message: "Password updated successfully." });
+    }
+
+    res.status(400).json({ status: false, message: "Invalid request." });
   } catch (error) {
-    console.log(error);
-    res.status(400).json({ status: false, message: error.message });
+    console.error("Error in forgotPassword:", error);
+    res.status(500).json({ status: false, message: "Internal server error." });
   }
 };

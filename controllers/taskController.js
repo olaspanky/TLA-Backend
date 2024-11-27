@@ -176,7 +176,7 @@ export const dashboardStatistics = async (req, res) => {
 
     // calculate total tasks
     const totalTasks = allTasks?.length;
-    const last10Task = allTasks?.slice(0, 10);
+    const last10Task = allTasks?.slice(0, 100);
 
     const summary = {
       totalTasks,
@@ -232,6 +232,8 @@ export const getTasks = async (req, res) => {
     return res.status(400).json({ status: false, message: error.message });
   }
 };
+
+
 export const getTask = async (req, res) => {
   try {
     const { id } = req.params;
@@ -266,23 +268,29 @@ export const getTask = async (req, res) => {
 
 export const createSubTask = async (req, res) => {
   try {
-    const { title, tag, date, stage, objectives } = req.body; // Make sure objectives are passed in the request body
-
+    const { title, tag, date, stage, objectives, startDate, completionDate } = req.body; // Include new fields
     const { id } = req.params;
+
+    // Fetch the main task to retrieve the team
+    const task = await Task.findById(id);
+    if (!task) {
+      return res.status(404).json({ status: false, message: "Task not found." });
+    }
 
     const newSubTask = {
       title,
-      date,
       tag,
-      stage: stage.toLowerCase(),
-      objectives: objectives || [] // Initialize objectives as an empty array if not provided
+      date,
+      stage: stage ? stage.toLowerCase() : "todo", // Default stage if undefined
+      objectives: objectives || [],
+      startDate, // Add start date
+      completionDate, // Add completion date
+      team: task.team, // Assign team from the main task
     };
 
-    const task = await Task.findById(id);
+    task.subTasks.push(newSubTask); // Push the new subtask to the subtasks array
 
-    task.subTasks.push(newSubTask);
-
-    await task.save();
+    await task.save(); // Save changes to the database
 
     res.status(200).json({ status: true, message: "SubTask added successfully." });
   } catch (error) {
@@ -291,46 +299,6 @@ export const createSubTask = async (req, res) => {
   }
 };
 
-
-// export const updateSubtask = async (req, res) => {
-//   try {
-//     const { title, tag, date, stage, objectives } = req.body; // Fields to update
-//     const { id, subTaskId } = req.params;
-
-//     // Validate parameters
-//     if (!id || !subTaskId) {
-//       return res.status(400).json({ status: false, message: "Invalid parameters." });
-//     }
-
-//     // Find the task
-//     const task = await Task.findById(id);
-//     if (!task) {
-//       return res.status(404).json({ status: false, message: "Task not found." });
-//     }
-
-//     // Find the subtask
-//     const subTask = task.subTasks.id(subTaskId);
-//     if (!subTask) {
-//       return res.status(404).json({ status: false, message: "Subtask not found." });
-//     }
-
-//     // Update fields if provided in the request body
-//     if (title !== undefined) subTask.title = title; // Corrected variable name
-//     if (tag !== undefined) subTask.tag = tag;
-//     if (date !== undefined) subTask.date = date;
-//     if (stage !== undefined) subTask.stage = stage.toLowerCase();
-//     if (objectives !== undefined) subTask.objectives = objectives; // Validate if needed
-
-//     // Save changes to the task
-//     await task.save();
-
-//     // Send successful response
-//     res.status(200).json({ status: true, message: "Subtask updated successfully." });
-//   } catch (error) {
-//     console.error(error); // Log the error for debugging
-//     return res.status(500).json({ status: false, message: "An error occurred while updating the subtask." });
-//   }
-// };
 
 export const updateSubtask = async (req, res) => {
   console.log("Request body:", req.body); // Log the body
@@ -372,6 +340,45 @@ export const updateSubtask = async (req, res) => {
     return res.status(400).json({ status: false, message: error.message });
   }
 };
+
+export const addCommentToSubTask = async (req, res) => {
+  try {
+    const { id, subTaskId } = req.params;
+    const { text, rating, reaction, author } = req.body; // Destructure directly from req.body
+
+    // Validate required fields
+    if (!text || !author) {
+      return res.status(400).json({ status: false, message: "Text and author are required for comments." });
+    }
+
+    const task = await Task.findById(id);
+    if (!task) {
+      return res.status(404).json({ status: false, message: "Task not found." });
+    }
+
+    const subTask = task.subTasks.id(subTaskId);
+    if (!subTask) {
+      return res.status(404).json({ status: false, message: "SubTask not found." });
+    }
+
+    const newComment = {
+      text,
+      rating: rating || null,
+      reaction: reaction || null,
+      author,
+    };
+
+    subTask.comments.push(newComment);
+    await task.save();
+
+    res.status(201).json({ status: true, message: "Comment added successfully.", comment: newComment });
+  } catch (error) {
+    console.error("Error adding comment:", error);
+    res.status(500).json({ status: false, message: error.message });
+  }
+};
+
+
 
 export const deleteSubTask = async (req, res) => {
   try {
