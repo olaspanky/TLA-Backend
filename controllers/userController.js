@@ -43,7 +43,7 @@ import Notice from "../models/notification.js";
 // };
 export const registerUser = async (req, res) => {
   try {
-    const { name, email, password, isAdmin, role, title, securityQuestion, securityAnswer } = req.body;
+    const { name, email, password, isAdmin, role, title, dept, securityQuestion, securityAnswer } = req.body;
 
     const userExist = await User.findOne({ email });
     if (userExist) {
@@ -60,6 +60,7 @@ export const registerUser = async (req, res) => {
       isAdmin,
       role,
       title,
+      dept,
       securityQuestion,
       securityAnswer,
     });
