@@ -3,47 +3,10 @@ import User from "../models/user.js";
 import { createJWT } from "../utils/index.js";
 import Notice from "../models/notification.js";
 
-// export const registerUser = async (req, res) => {
-//   try {
-//     const { name, email, password, isAdmin, role, title } = req.body;
 
-//     const userExist = await User.findOne({ email });
-
-//     if (userExist) {
-//       return res.status(400).json({
-//         status: false,
-//         message: "User already exists",
-//       });
-//     }
-
-//     const user = await User.create({
-//       name,
-//       email,
-//       password,
-//       isAdmin,
-//       role,
-//       title,
-//     });
-
-//     if (user) {
-//       isAdmin ? createJWT(res, user._id) : null;
-
-//       user.password = undefined;
-
-//       res.status(201).json(user);
-//     } else {
-//       return res
-//         .status(400)
-//         .json({ status: false, message: "Invalid user data" });
-//     }
-//   } catch (error) {
-//     console.log(error);
-//     return res.status(400).json({ status: false, message: error.message });
-//   }
-// };
 export const registerUser = async (req, res) => {
   try {
-    const { name, email, password, isAdmin, role, title, dept, securityQuestion, securityAnswer } = req.body;
+    const { name, email, password, isAdmin, isSuperAdmin, role, title, dept, securityQuestion, securityAnswer } = req.body;
 
     const userExist = await User.findOne({ email });
     if (userExist) {
@@ -58,6 +21,7 @@ export const registerUser = async (req, res) => {
       email,
       password,
       isAdmin,
+      isSuperAdmin,
       role,
       title,
       dept,
@@ -66,7 +30,7 @@ export const registerUser = async (req, res) => {
     });
 
     if (user) {
-      if (isAdmin) createJWT(res, user._id);
+      if (isAdmin || isSuperAdmin) createJWT(res, user._id);
       user.password = undefined;
       user.securityAnswer = undefined;
       res.status(201).json(user);
