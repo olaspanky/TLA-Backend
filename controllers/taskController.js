@@ -265,10 +265,9 @@ export const getTask = async (req, res) => {
   }
 };
 
-
 export const createSubTask = async (req, res) => {
   try {
-    const { title, tag, date, stage, objectives, startDate, completionDate } = req.body; // Include new fields
+    const { title, tag, date, stage, objectives, startDate, completionDate, teamMember } = req.body; // teamMember is now a single member
     const { id } = req.params;
 
     // Fetch the main task to retrieve the team
@@ -277,15 +276,21 @@ export const createSubTask = async (req, res) => {
       return res.status(404).json({ status: false, message: "Task not found." });
     }
 
+    // Validate that the team member exists in the task's team
+    const teamMemberExists = task.team.some(member => member._id.toString() === teamMember);
+    if (!teamMemberExists) {
+      return res.status(400).json({ status: false, message: "Invalid team member." });
+    }
+
     const newSubTask = {
       title,
       tag,
       date,
       stage: stage ? stage.toLowerCase() : "todo", // Default stage if undefined
       objectives: objectives || [],
-      startDate, // Add start date
-      completionDate, // Add completion date
-      team: task.team, // Assign team from the main task
+      startDate,
+      completionDate,
+      team: [teamMember], // Only one team member
     };
 
     task.subTasks.push(newSubTask); // Push the new subtask to the subtasks array
@@ -298,6 +303,39 @@ export const createSubTask = async (req, res) => {
     return res.status(400).json({ status: false, message: error.message });
   }
 };
+
+// export const createSubTask = async (req, res) => {
+//   try {
+//     const { title, tag, date, stage, objectives, startDate, completionDate } = req.body; // Include new fields
+//     const { id } = req.params;
+
+//     // Fetch the main task to retrieve the team
+//     const task = await Task.findById(id);
+//     if (!task) {
+//       return res.status(404).json({ status: false, message: "Task not found." });
+//     }
+
+//     const newSubTask = {
+//       title,
+//       tag,
+//       date,
+//       stage: stage ? stage.toLowerCase() : "todo", // Default stage if undefined
+//       objectives: objectives || [],
+//       startDate, // Add start date
+//       completionDate, // Add completion date
+//       team: task.team, // Assign team from the main task
+//     };
+
+//     task.subTasks.push(newSubTask); // Push the new subtask to the subtasks array
+
+//     await task.save(); // Save changes to the database
+
+//     res.status(200).json({ status: true, message: "SubTask added successfully." });
+//   } catch (error) {
+//     console.log(error);
+//     return res.status(400).json({ status: false, message: error.message });
+//   }
+// };
 
 
 export const updateSubtask = async (req, res) => {
