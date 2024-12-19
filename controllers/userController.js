@@ -282,6 +282,8 @@ export const deleteUserProfile = async (req, res) => {
 //     res.status(400).json({ status: false, message: error.message });
 //   }
 // };
+
+
 export const forgotPassword = async (req, res) => {
   try {
     const { email, securityAnswer, newPassword } = req.body;
@@ -317,10 +319,11 @@ export const forgotPassword = async (req, res) => {
 
     // Step 3: Update Password
     if (newPassword) {
-      user.password = newPassword; // Password will be hashed via pre-save hook
-      await user.save();
+      user.password = newPassword; // Pre-save hook hashes the password
+      await user.save({ validateModifiedOnly: true }); // Only validate modified fields
       return res.status(200).json({ status: true, message: "Password updated successfully." });
     }
+    
 
     res.status(400).json({ status: false, message: "Invalid request." });
   } catch (error) {
