@@ -123,14 +123,87 @@ export const postTaskActivity = async (req, res) => {
   }
 };
 
+// export const dashboardStatistics = async (req, res) => {
+//   try {
+//     const { userId, isAdmin } = req.user;
+
+//     const allTasks = isAdmin
+//       ? await Task.find({
+//           isTrashed: false,
+//         })
+//           .populate({
+//             path: "team",
+//             select: "name role title email",
+//           })
+//           .sort({ _id: -1 })
+//       : await Task.find({
+//           isTrashed: false,
+//           team: { $all: [userId] },
+//         })
+//           .populate({
+//             path: "team",
+//             select: "name role title email",
+//           })
+//           .sort({ _id: -1 });
+
+//     const users = await User.find({ isActive: true })
+//       .select("name title role isAdmin createdAt")
+//       .limit(10)
+//       .sort({ _id: -1 });
+
+//     //   group task by stage and calculate counts
+//     const groupTaskks = allTasks.reduce((result, task) => {
+//       const stage = task.stage;
+
+//       if (!result[stage]) {
+//         result[stage] = 1;
+//       } else {
+//         result[stage] += 1;
+//       }
+
+//       return result;
+//     }, {});
+
+//     // Group tasks by priority
+//     const groupData = Object.entries(
+//       allTasks.reduce((result, task) => {
+//         const { priority } = task;
+
+//         result[priority] = (result[priority] || 0) + 1;
+//         return result;
+//       }, {})
+//     ).map(([name, total]) => ({ name, total }));
+
+//     // calculate total tasks
+//     const totalTasks = allTasks?.length;
+//     const last10Task = allTasks?.slice(0, 100);
+
+//     const summary = {
+//       totalTasks,
+//       last10Task,
+//       users: isAdmin ? users : [],
+//       tasks: groupTaskks,
+//       graphData: groupData,
+//     };
+
+//     res.status(200).json({
+//       status: true,
+//       message: "Successfully",
+//       ...summary,
+//     });
+//   } catch (error) {
+//     console.log(error);
+//     return res.status(400).json({ status: false, message: error.message });
+//   }
+// };
+
 export const dashboardStatistics = async (req, res) => {
   try {
-    const { userId, isAdmin } = req.user;
+    const { userId, isAdmin, isSuperAdmin } = req.user;
+    const isAdminOrSuperAdmin = isAdmin || isSuperAdmin;
 
-    const allTasks = isAdmin
-      ? await Task.find({
-          isTrashed: false,
-        })
+    const allTasks = isAdminOrSuperAdmin
+      ? await Task.find({ isTrashed: false })
           .populate({
             path: "team",
             select: "name role title email",
@@ -147,53 +220,45 @@ export const dashboardStatistics = async (req, res) => {
           .sort({ _id: -1 });
 
     const users = await User.find({ isActive: true })
-      .select("name title role isAdmin createdAt")
+      .select("name title role isAdmin isSuperAdmin createdAt")
       .limit(10)
       .sort({ _id: -1 });
 
-    //   group task by stage and calculate counts
-    const groupTaskks = allTasks.reduce((result, task) => {
+    // Group tasks by stage and calculate counts
+    const groupedTasks = allTasks.reduce((result, task) => {
       const stage = task.stage;
-
-      if (!result[stage]) {
-        result[stage] = 1;
-      } else {
-        result[stage] += 1;
-      }
-
+      result[stage] = (result[stage] || 0) + 1;
       return result;
     }, {});
 
     // Group tasks by priority
-    const groupData = Object.entries(
+    const priorityData = Object.entries(
       allTasks.reduce((result, task) => {
         const { priority } = task;
-
         result[priority] = (result[priority] || 0) + 1;
         return result;
       }, {})
     ).map(([name, total]) => ({ name, total }));
 
-    // calculate total tasks
-    const totalTasks = allTasks?.length;
-    const last10Task = allTasks?.slice(0, 100);
-
     const summary = {
-      totalTasks,
-      last10Task,
-      users: isAdmin ? users : [],
-      tasks: groupTaskks,
-      graphData: groupData,
+      totalTasks: allTasks.length,
+      last10Task: allTasks.slice(0, 100),
+      users: isAdminOrSuperAdmin ? users : [],
+      tasks: groupedTasks,
+      graphData: priorityData,
     };
 
     res.status(200).json({
       status: true,
-      message: "Successfully",
+      message: "Successfully retrieved dashboard statistics",
       ...summary,
     });
   } catch (error) {
-    console.log(error);
-    return res.status(400).json({ status: false, message: error.message });
+    console.error("Dashboard statistics error:", error);
+    return res.status(400).json({ 
+      status: false, 
+      message: error.message || "Failed to retrieve dashboard statistics"
+    });
   }
 };
 
@@ -202,26 +267,25 @@ export const dashboardStatistics = async (req, res) => {
 export const getTasks = async (req, res) => {
   try {
     const { stage, isTrashed } = req.query;
-    const { userId } = req.user; // Get the logged-in user's ID
+    const { userId, isSuperAdmin } = req.user; // Add isSuperAdmin from request
 
-    // Build query based on stage and trashed filters
     let query = { isTrashed: isTrashed ? true : false };
 
-    // Add stage filtering if provided
     if (stage) {
       query.stage = stage;
     }
 
-    // Only return tasks where the user is part of the team
-    query.team = { $in: [userId] }; // Match tasks where userId is in the team array
+    // Only add team filter if user is NOT a super admin
+    if (!isSuperAdmin) {
+      query.team = { $in: [userId] };
+    }
 
-    // Execute the query
     const tasks = await Task.find(query)
       .populate({
         path: "team",
-        select: "name title email", // Only select relevant fields
+        select: "name title email",
       })
-      .sort({ _id: -1 }); // Sort by task ID in descending order
+      .sort({ _id: -1 });
 
     res.status(200).json({
       status: true,
@@ -234,25 +298,61 @@ export const getTasks = async (req, res) => {
 };
 
 
+// export const getTask = async (req, res) => {
+//   try {
+//     const { id } = req.params;
+//     const { userId } = req.user;
+
+//     // Fetch the task by ID and populate relevant fields
+//     const task = await Task.findById(id)
+//       .populate({
+//         path: "team",
+//         select: "name title role email", // Only select relevant fields
+//       })
+//       .populate({
+//         path: "activities.by",
+//         select: "name", // Populate activity owners
+//       });
+
+//     // Ensure that the user is part of the task's team
+//     if (!task.team.some(member => member._id.equals(userId))) {
+//       return res.status(403).json({ status: false, message: "Not authorized to view this task" });
+//     }
+
+//     res.status(200).json({
+//       status: true,
+//       task,
+//     });
+//   } catch (error) {
+//     console.log(error);
+//     return res.status(400).json({ status: false, message: error.message });
+//   }
+// };
+
 export const getTask = async (req, res) => {
   try {
     const { id } = req.params;
-    const { userId } = req.user;
+    const { userId, isSuperAdmin } = req.user; // Add isSuperAdmin destructuring
 
-    // Fetch the task by ID and populate relevant fields
     const task = await Task.findById(id)
       .populate({
         path: "team",
-        select: "name title role email", // Only select relevant fields
+        select: "name title role email",
       })
       .populate({
         path: "activities.by",
-        select: "name", // Populate activity owners
+        select: "name",
       });
 
-    // Ensure that the user is part of the task's team
-    if (!task.team.some(member => member._id.equals(userId))) {
-      return res.status(403).json({ status: false, message: "Not authorized to view this task" });
+    // Allow Super Admin to bypass team check
+    if (!isSuperAdmin) {
+      const isTeamMember = task.team.some(member => member._id.equals(userId));
+      if (!isTeamMember) {
+        return res.status(403).json({ 
+          status: false, 
+          message: "Not authorized to view this task" 
+        });
+      }
     }
 
     res.status(200).json({
@@ -304,38 +404,7 @@ export const createSubTask = async (req, res) => {
   }
 };
 
-// export const createSubTask = async (req, res) => {
-//   try {
-//     const { title, tag, date, stage, objectives, startDate, completionDate } = req.body; // Include new fields
-//     const { id } = req.params;
 
-//     // Fetch the main task to retrieve the team
-//     const task = await Task.findById(id);
-//     if (!task) {
-//       return res.status(404).json({ status: false, message: "Task not found." });
-//     }
-
-//     const newSubTask = {
-//       title,
-//       tag,
-//       date,
-//       stage: stage ? stage.toLowerCase() : "todo", // Default stage if undefined
-//       objectives: objectives || [],
-//       startDate, // Add start date
-//       completionDate, // Add completion date
-//       team: task.team, // Assign team from the main task
-//     };
-
-//     task.subTasks.push(newSubTask); // Push the new subtask to the subtasks array
-
-//     await task.save(); // Save changes to the database
-
-//     res.status(200).json({ status: true, message: "SubTask added successfully." });
-//   } catch (error) {
-//     console.log(error);
-//     return res.status(400).json({ status: false, message: error.message });
-//   }
-// };
 
 
 export const updateSubtask = async (req, res) => {
@@ -343,8 +412,9 @@ export const updateSubtask = async (req, res) => {
   console.log("Request parameters:", req.params); // Log parameters
 
   try {
-    const { title, tag, date, stage, objectives } = req.body;
+    const { title, tag, date, stage, objectives, newObjective } = req.body; // Add newObjective
     const { id, subTaskId } = req.params;
+
 
     // Additional validation if needed
     console.log("ID:", id, "Subtask ID:", subTaskId); // Log IDs
@@ -370,7 +440,21 @@ export const updateSubtask = async (req, res) => {
     if (stage !== undefined) subTask.stage = stage.toLowerCase();
     if (objectives !== undefined) subTask.objectives = objectives; // Change from subtask to subTask
 
+    if (newObjective && newObjective.trim()) {
+      subTask.objectives.push({
+        description: newObjective.trim(),
+        status: "todo", // Default status
+      });
+    }
+
+    // Update existing objectives if provided
+    if (objectives !== undefined) {
+      subTask.objectives = objectives;
+    }
+
+    // ... rest of existing code ...
     await task.save();
+
 
     res.status(200).json({ status: true, message: "Subtask updated successfully." });
   } catch (error) {

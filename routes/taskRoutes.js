@@ -63,17 +63,16 @@ import {
   deleteSubTask, 
   addCommentToSubTask
 } from "../controllers/taskController.js";
-import { isAdminRoute, protectRoute } from "../middlewares/authMiddlewave.js";
+import { isAdminRoute, protectRoute,   isSuperAdminRoute} from "../middlewares/authMiddlewave.js";
 
 const router = express.Router();
 
 // Admin and SuperAdmin routes
-router.post("/create", protectRoute, isAdminRoute, createTask);
-router.post("/duplicate/:id", protectRoute, isAdminRoute, duplicateTask);
+router.post("/create", protectRoute, createTask);
+router.post("/duplicate/:id", protectRoute, duplicateTask);
 router.delete(
   "/delete-restore/:id?",
   protectRoute,
-  isAdminRoute,
   deleteRestoreTask
 );
 
@@ -86,12 +85,12 @@ router.get("/", protectRoute, getTasks);
 router.get("/:id", protectRoute, getTask);
 
 // Subtask-related routes with admin/superadmin access
-router.put("/create-subtask/:id", protectRoute, isAdminRoute, createSubTask);
-router.put("/update-subtaskItem/:id/:subTaskId/:objectiveId", protectRoute, isAdminRoute, updateSubTaskItem); 
-router.put("/update-subtask/:id/:subTaskId", protectRoute, isAdminRoute, updateSubtask); 
+router.put("/create-subtask/:id", protectRoute,  createSubTask);
+router.put("/update-subtaskItem/:id/:subTaskId/:objectiveId", protectRoute, updateSubTaskItem); 
+router.put("/update-subtask/:id/:subTaskId", protectRoute, updateSubtask); 
 
 router.put("/update/:id", protectRoute, updateTask);
 router.put("/:id", protectRoute, trashTask);
-router.delete("/delete-subtask/:id/:subTaskId", protectRoute, isAdminRoute, deleteSubTask);
+router.delete("/delete-subtask/:id/:subTaskId", protectRoute, deleteSubTask);
 
 export default router;

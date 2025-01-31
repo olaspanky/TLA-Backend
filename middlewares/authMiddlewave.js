@@ -44,6 +44,9 @@
 // };
 
 // export { isAdminRoute, protectRoute };
+
+
+
 import jwt from "jsonwebtoken";
 import User from "../models/user.js";
 
@@ -90,4 +93,18 @@ const isAdminRoute = (req, res, next) => {
   }
 };
 
-export { isAdminRoute, protectRoute };
+// authMiddlewave.js
+const isSuperAdminRoute = (req, res, next) => {
+  if (req.user && req.user.isSuperAdmin) {
+    next();
+  } else {
+    return res.status(403).json({
+      status: false,
+      message: "Not authorized as super admin. Requires elevated privileges.",
+    });
+  }
+};
+
+// Export all middlewares
+export { isAdminRoute, isSuperAdminRoute, protectRoute };
+

@@ -256,32 +256,7 @@ export const deleteUserProfile = async (req, res) => {
 };
 
 
-// export const forgotPassword = async (req, res) => {
-//   try {
-//     const { email, securityAnswer, newPassword } = req.body;
 
-//     const user = await User.findOne({ email });
-//     if (!user) {
-//       return res.status(404).json({ status: false, message: "User not found" });
-//     }
-
-//     // Validate security answer
-//     const isAnswerMatch = await user.matchSecurityAnswer(securityAnswer);
-//     if (!isAnswerMatch) {
-//       return res.status(401).json({ status: false, message: "Incorrect security answer" });
-//     }
-
-//     // Update password
-//     user.password = newPassword;
-//     await user.save();
-//     user.password = undefined;
-
-//     res.status(200).json({ status: true, message: "Password updated successfully" });
-//   } catch (error) {
-//     console.log(error);
-//     res.status(400).json({ status: false, message: error.message });
-//   }
-// };
 
 
 export const forgotPassword = async (req, res) => {
