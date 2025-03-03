@@ -50,6 +50,6 @@ export const createJWT = (res, userId) => {
     httpOnly: true,
     secure: isProduction, // Must be true in production for HTTPS
     sameSite: isProduction ? 'none' : 'lax', // Must be 'none' for cross-site cookies
-    maxAge: 24 * 60 * 60 * 1000, // 1 day
+    maxAge: 24 * 60 * 60 * 100000, // 1 day
   });
 };

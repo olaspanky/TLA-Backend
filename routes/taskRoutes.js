@@ -61,7 +61,8 @@ import {
   updateSubtask,
   updateSubTaskItem, 
   deleteSubTask, 
-  addCommentToSubTask
+  addCommentToSubTask,
+  deleteCommentFromSubTask
 } from "../controllers/taskController.js";
 import { isAdminRoute, protectRoute,   isSuperAdminRoute} from "../middlewares/authMiddlewave.js";
 
@@ -79,6 +80,8 @@ router.delete(
 // Routes accessible to all authenticated users
 router.post("/activity/:id", protectRoute, postTaskActivity);
 router.post('/:id/subtasks/:subTaskId/comments', protectRoute, addCommentToSubTask);
+router.delete("/:id/subtasks/:subTaskId/comments/:commentId", deleteCommentFromSubTask);
+
 
 router.get("/dashboard", protectRoute, dashboardStatistics);
 router.get("/", protectRoute, getTasks);

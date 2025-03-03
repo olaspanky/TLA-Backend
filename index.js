@@ -58,7 +58,7 @@ const app = express();
 // Enable CORS with corrected settings
 app.use(
   cors({
-    origin: ["http://localhost:3000", "https://tla-two.vercel.app", "https://trafficpulse.pbrinsight.com.ng", "https://trafficpulsepbr.global", "https://www.trafficpulsepbr.global"],
+    origin: ["http://localhost:3000", "http://localhost:3000", "https://tla-two.vercel.app", "https://trafficpulse.pbrinsight.com.ng", "https://trafficpulsepbr.global", "https://www.trafficpulsepbr.global"],
     methods: ["GET", "POST", "DELETE", "PUT", "OPTIONS"],
     credentials: true,
   })
