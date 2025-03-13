@@ -123,187 +123,187 @@ export const postTaskActivity = async (req, res) => {
   }
 };
 
-export const dashboardStatistics = async (req, res) => {
-  try {
-    const { userId, isAdmin } = req.user;
-
-    const allTasks = isAdmin
-      ? await Task.find({
-          isTrashed: false,
-        })
-          .populate({
-            path: "team",
-            select: "name role title email",
-          })
-          .sort({ _id: -1 })
-      : await Task.find({
-          isTrashed: false,
-          team: { $all: [userId] },
-        })
-          .populate({
-            path: "team",
-            select: "name role title email",
-          })
-          .sort({ _id: -1 });
-
-    const users = await User.find({ isActive: true })
-      .select("name title role isAdmin createdAt")
-      .limit(10)
-      .sort({ _id: -1 });
-
-    //   group task by stage and calculate counts
-    const groupTaskks = allTasks.reduce((result, task) => {
-      const stage = task.stage;
-
-      if (!result[stage]) {
-        result[stage] = 1;
-      } else {
-        result[stage] += 1;
-      }
-
-      return result;
-    }, {});
-
-    // Group tasks by priority
-    const groupData = Object.entries(
-      allTasks.reduce((result, task) => {
-        const { priority } = task;
-
-        result[priority] = (result[priority] || 0) + 1;
-        return result;
-      }, {})
-    ).map(([name, total]) => ({ name, total }));
-
-    // calculate total tasks
-    const totalTasks = allTasks?.length;
-    const last10Task = allTasks?.slice(0, 100);
-
-    const summary = {
-      totalTasks,
-      last10Task,
-      users: isAdmin ? users : [],
-      tasks: groupTaskks,
-      graphData: groupData,
-    };
-
-    res.status(200).json({
-      status: true,
-      message: "Successfully",
-      ...summary,
-    });
-  } catch (error) {
-    console.log(error);
-    return res.status(400).json({ status: false, message: error.message });
-  }
-};
-
 // export const dashboardStatistics = async (req, res) => {
 //   try {
-//     const { userId, isAdmin, isSuperAdmin } = req.user;
+//     const { userId, isAdmin } = req.user;
 
-//     let allTasks;
-
-//     if (isSuperAdmin) {
-//       // SuperAdmins see all tasks
-//       allTasks = await Task.find({ isTrashed: false })
-//         .populate({
-//           path: "team",
-//           select: "name role title email",
+//     const allTasks = isAdmin
+//       ? await Task.find({
+//           isTrashed: false,
 //         })
-//         .sort({ _id: -1 });
-//     } else if (isAdmin) {
-//       // Admins see their tasks and tasks of their team members
-//       // Step 1: Find tasks where the admin is in the team
-//       const adminTasks = await Task.find({
-//         isTrashed: false,
-//         team: { $all: [userId] },
-//       }).populate({
-//         path: "team",
-//         select: "name role title email",
-//       });
-
-//       // Step 2: Extract all team member IDs from admin's tasks
-//       const teamMemberIds = new Set();
-//       adminTasks.forEach(task => {
-//         task.team.forEach(member => teamMemberIds.add(member._id.toString()));
-//       });
-
-//       // Step 3: Find all tasks where any of these team members are involved
-//       allTasks = await Task.find({
-//         isTrashed: false,
-//         team: { $in: [...teamMemberIds] }, // Tasks with any team member
-//       })
-//         .populate({
-//           path: "team",
-//           select: "name role title email",
+//           .populate({
+//             path: "team",
+//             select: "name role title email",
+//           })
+//           .sort({ _id: -1 })
+//       : await Task.find({
+//           isTrashed: false,
+//           team: { $all: [userId] },
 //         })
-//         .sort({ _id: -1 });
-//     } else {
-//       // Regular users see only their own tasks
-//       allTasks = await Task.find({
-//         isTrashed: false,
-//         team: { $all: [userId] },
-//       })
-//         .populate({
-//           path: "team",
-//           select: "name role title email",
-//         })
-//         .sort({ _id: -1 });
-//     }
+//           .populate({
+//             path: "team",
+//             select: "name role title email",
+//           })
+//           .sort({ _id: -1 });
 
-//     // Fetch users (only for superAdmins or admins, limit admins to their team later if needed)
 //     const users = await User.find({ isActive: true })
-//       .select("name title role isAdmin isSuperAdmin createdAt")
+//       .select("name title role isAdmin createdAt")
 //       .limit(10)
 //       .sort({ _id: -1 });
 
-//     // Group tasks by stage and calculate counts
-//     const groupedTasks = allTasks.reduce((result, task) => {
+//     //   group task by stage and calculate counts
+//     const groupTaskks = allTasks.reduce((result, task) => {
 //       const stage = task.stage;
-//       result[stage] = (result[stage] || 0) + 1;
+
+//       if (!result[stage]) {
+//         result[stage] = 1;
+//       } else {
+//         result[stage] += 1;
+//       }
+
 //       return result;
 //     }, {});
 
 //     // Group tasks by priority
-//     const priorityData = Object.entries(
+//     const groupData = Object.entries(
 //       allTasks.reduce((result, task) => {
 //         const { priority } = task;
+
 //         result[priority] = (result[priority] || 0) + 1;
 //         return result;
 //       }, {})
 //     ).map(([name, total]) => ({ name, total }));
 
-//     // For admins, filter users to only include team members (optional enhancement)
-//     let filteredUsers = users;
-//     if (isAdmin && !isSuperAdmin) {
-//       const teamMemberIds = new Set();
-//       allTasks.forEach(task => {
-//         task.team.forEach(member => teamMemberIds.add(member._id.toString()));
-//       });
-//       filteredUsers = users.filter(user => teamMemberIds.has(user._id.toString()));
-//     }
+//     // calculate total tasks
+//     const totalTasks = allTasks?.length;
+//     const last10Task = allTasks?.slice(0, 100);
 
 //     const summary = {
-//       totalTasks: allTasks.length,
-//       last10Task: allTasks.slice(0, 100), // Note: You might want to fix this to 10 if intended
-//       users: isSuperAdmin ? users : isAdmin ? filteredUsers : [],
-//       tasks: groupedTasks,
-//       graphData: priorityData,
+//       totalTasks,
+//       last10Task,
+//       users: isAdmin ? users : [],
+//       tasks: groupTaskks,
+//       graphData: groupData,
 //     };
 
 //     res.status(200).json({
 //       status: true,
-//       message: "Successfully retrieved dashboard statistics",
+//       message: "Successfully",
 //       ...summary,
 //     });
 //   } catch (error) {
-//     console.error("Dashboard statistics error:", error);
-//     return res.status(400).json({
-//       status: false,
-//       message: error.message || "Failed to retrieve dashboard statistics",
-//     });
+//     console.log(error);
+//     return res.status(400).json({ status: false, message: error.message });
 //   }
 // };
+
+export const dashboardStatistics = async (req, res) => {
+  try {
+    const { userId, isAdmin, isSuperAdmin } = req.user;
+
+    let allTasks;
+
+    if (isSuperAdmin) {
+      // SuperAdmins see all tasks
+      allTasks = await Task.find({ isTrashed: false })
+        .populate({
+          path: "team",
+          select: "name role title email",
+        })
+        .sort({ _id: -1 });
+    } else if (isAdmin) {
+      // Admins see their tasks and tasks of their team members
+      // Step 1: Find tasks where the admin is in the team
+      const adminTasks = await Task.find({
+        isTrashed: false,
+        team: { $all: [userId] },
+      }).populate({
+        path: "team",
+        select: "name role title email",
+      });
+
+      // Step 2: Extract all team member IDs from admin's tasks
+      const teamMemberIds = new Set();
+      adminTasks.forEach(task => {
+        task.team.forEach(member => teamMemberIds.add(member._id.toString()));
+      });
+
+      // Step 3: Find all tasks where any of these team members are involved
+      allTasks = await Task.find({
+        isTrashed: false,
+        team: { $in: [...teamMemberIds] }, // Tasks with any team member
+      })
+        .populate({
+          path: "team",
+          select: "name role title email",
+        })
+        .sort({ _id: -1 });
+    } else {
+      // Regular users see only their own tasks
+      allTasks = await Task.find({
+        isTrashed: false,
+        team: { $all: [userId] },
+      })
+        .populate({
+          path: "team",
+          select: "name role title email",
+        })
+        .sort({ _id: -1 });
+    }
+
+    // Fetch users (only for superAdmins or admins, limit admins to their team later if needed)
+    const users = await User.find({ isActive: true })
+      .select("name title role isAdmin isSuperAdmin createdAt")
+      .limit(10000)
+      .sort({ _id: -1 });
+
+    // Group tasks by stage and calculate counts
+    const groupedTasks = allTasks.reduce((result, task) => {
+      const stage = task.stage;
+      result[stage] = (result[stage] || 0) + 1;
+      return result;
+    }, {});
+
+    // Group tasks by priority
+    const priorityData = Object.entries(
+      allTasks.reduce((result, task) => {
+        const { priority } = task;
+        result[priority] = (result[priority] || 0) + 1;
+        return result;
+      }, {})
+    ).map(([name, total]) => ({ name, total }));
+
+    // For admins, filter users to only include team members (optional enhancement)
+    let filteredUsers = users;
+    if (isAdmin && !isSuperAdmin) {
+      const teamMemberIds = new Set();
+      allTasks.forEach(task => {
+        task.team.forEach(member => teamMemberIds.add(member._id.toString()));
+      });
+      filteredUsers = users.filter(user => teamMemberIds.has(user._id.toString()));
+    }
+
+    const summary = {
+      totalTasks: allTasks.length,
+      last10Task: allTasks.slice(0, 100), // Note: You might want to fix this to 10 if intended
+      users: isSuperAdmin ? users : isAdmin ? filteredUsers : [],
+      tasks: groupedTasks,
+      graphData: priorityData,
+    };
+
+    res.status(200).json({
+      status: true,
+      message: "Successfully retrieved dashboard statistics",
+      ...summary,
+    });
+  } catch (error) {
+    console.error("Dashboard statistics error:", error);
+    return res.status(400).json({
+      status: false,
+      message: error.message || "Failed to retrieve dashboard statistics",
+    });
+  }
+};
 
 
 export const getTasks = async (req, res) => {
