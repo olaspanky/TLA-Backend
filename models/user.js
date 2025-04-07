@@ -6,7 +6,7 @@ const userSchema = new Schema(
   {
     name: { type: String, required: true },
     title: { type: String, required: true },
-    dept: { type: String, required: true },
+    dept: [{ type: String }], // Changed to array of strings
     role: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
